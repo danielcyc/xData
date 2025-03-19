@@ -1,0 +1,36 @@
+# Byte-compiled / compiled Python files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+.env/
+poetry.lock
+Pipfile
+Pipfile.lock
+
+# Logs and databases
+*.log
+db.sqlite3
+instance/
+.envrc
+*.sqlite3
+*.db
+
+# VS Code settings
+.vscode/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Pytest cache
+.pytest_cache/
+
+# MyPy cache
+.mypy_cache/
+
+# Coverage reports
+htmlcov/
+.coverage
