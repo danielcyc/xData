@@ -4,6 +4,7 @@
 
 - Ensure you are in the root directory
 - run `docker-compose up --build`
+- view FE site on http://localhost:3000/
 
 ## Running Backend Tests
 
