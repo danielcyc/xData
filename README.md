@@ -25,3 +25,15 @@ or else change your directory: `cd backend`
 - Activate virtual envrionment `eval $(poetry env activate)`
 - Install dependencies `poetry install`
 - Run the app `poetry run uvicorn main:app --reload`
+
+## Running Backend Tests
+- Ensure that you are in the `/backend` subfolder:
+`pwd` ~/xData/backend
+or else change your directory: `cd backend`
+- run `poetry run pytest`
+
+## Running Frontend Tests
+- Ensure that you are in the `/frontend` subfolder:
+`pwd` ~/xData/frontend
+or else change your directory: `cd frontend`
+- run `npm test`
