@@ -8,7 +8,6 @@ const FileUpload = () => {
 
   const handleFileChange = (event) => {
     setFile(event.target.files[0]);
-    console.log(file.type); // Logs the MIME type (e.g., 'audio/mpeg' for MP3)
   };
 
   const handleUpload = async () => {
@@ -44,7 +43,7 @@ const FileUpload = () => {
 
       {transcription && (
         <div>
-          <h3>Transcription</h3>
+          <h3>Transcription:</h3>
           <p>{transcription}</p>
         </div>
       )}
