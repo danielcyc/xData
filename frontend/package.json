@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "axios": "^1.8.4",
+    "crypto-browserify": "^3.12.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "testing-library": "^0.0.2"
