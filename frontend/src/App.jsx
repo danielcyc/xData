@@ -13,7 +13,6 @@ function App() {
       .then((res) => res.json())
       .then((data) => {
         setMessage(data.status);
-        console.log(data);
       })
       .catch((err) => console.error("Error fetching data:", err));
   }, []);
