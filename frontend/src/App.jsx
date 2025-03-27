@@ -1,45 +1,40 @@
 import { useState, useEffect } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
+import React from "react";
+import FileUpload from "./FileUpload";
+import TranscriptionList from "./TranscriptionList";
+import SearchTranscription from "./SearchTranscription";
 import "./App.css";
 
 function App() {
-  const [count, setCount] = useState(0);
   const [message, setMessage] = useState("");
 
   useEffect(() => {
     fetch("http://127.0.0.1:8000/")
       .then((res) => res.json())
       .then((data) => {
-        setMessage(data.message);
+        setMessage(data.status);
         console.log(data);
       })
       .catch((err) => console.error("Error fetching data:", err));
+    console.log(message);
   }, []);
 
   return (
     <>
+      <h1>xData</h1>
+      <div>Backend API Status: {message} </div>
       <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+        <h2>Upload your file</h2>
+        <FileUpload />
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <div>Message from backend: {message} </div>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
+      <div>
+        <h2>Search Transcriptions</h2>
+        <SearchTranscription />
       </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+      <div>
+        <h2>All Transcriptions</h2>
+        <TranscriptionList />
+      </div>
     </>
   );
 }
