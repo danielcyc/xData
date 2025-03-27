@@ -1,11 +1,13 @@
+import io
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import os
 import sqlite3
 from datetime import datetime
-import torchaudio
-from transformers import pipeline
+import torch
+import librosa
+from transformers import WhisperProcessor, WhisperForConditionalGeneration
 
 app = FastAPI()
 UPLOAD_FOLDER = "uploads"
@@ -21,8 +23,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Load Whisper model
-whisper = pipeline("automatic-speech-recognition", model="openai/whisper-tiny")
+# Load Whisper model and processor
+model_name = "openai/whisper-tiny"
+processor = WhisperProcessor.from_pretrained(model_name)
+model = WhisperForConditionalGeneration.from_pretrained(model_name)
+
+# Set the model to eval mode
+model.eval()
 
 # Initialize SQLite Database
 def init_db():
@@ -64,23 +71,62 @@ def get_unique_filename(filename: str) -> str:
     
     return new_filename
 
-# Transcribe Audio Endpoint
 @app.post("/transcribe")
 async def transcribe_audio(file: UploadFile = File(...)):
     new_filename = get_unique_filename(file.filename)
-
-    # Load audio
-    audio_tensor, rate = torchaudio.load(file.file)
-    transcription = whisper(audio_tensor[0].numpy(), sampling_rate=rate)["text"]
+    audio_data = await file.read()
+    # Use BytesIO to turn the bytes into a file-like object for librosa
+    audio_io = io.BytesIO(audio_data)
+    # Load audio file using librosa
+    try:
+        # Load audio at 16kHz sample rate for Whisper compatibility
+        audio, rate = librosa.load(audio_io, sr=16000)  
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error loading audio file: {str(e)}")
     
+    # Define chunk duration (in seconds)
+    chunk_duration = 30  # seconds
+    chunk_length = chunk_duration * 16000  # 16kHz sample rate
+
+    # Split the audio into chunks
+    num_chunks = len(audio) // chunk_length
+    chunks = [audio[i * chunk_length: (i + 1) * chunk_length] for i in range(num_chunks)]
+
+    # If there's leftover audio, add it as another chunk
+    if len(audio) % chunk_length != 0:
+        chunks.append(audio[num_chunks * chunk_length:])
+
+    # List to store transcriptions for all chunks
+    transcriptions = []
+
+    # Process each chunk
+    for chunk in chunks:
+        try:
+            # Process the chunk with Whisper
+            inputs = processor(chunk, return_tensors="pt", sampling_rate=16000)
+            input_features = inputs["input_features"]
+
+            # Generate transcription for the chunk
+            with torch.no_grad():
+                generated_ids = model.generate(input_features)
+
+            # Decode the transcription
+            transcription = processor.decode(generated_ids[0], skip_special_tokens=True)
+            transcriptions.append(transcription)
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Error transcribing audio: {str(e)}")
+
+    # Join transcriptions from all chunks
+    full_transcription = " ".join(transcriptions)
+
     # Save to db
     with sqlite3.connect(DB_FILE) as conn:
         c = conn.cursor()
         c.execute("INSERT INTO transcriptions (filename, transcription, timestamp) VALUES (?, ?, ?)",
-                  (new_filename, transcription, datetime.now().isoformat()))
+                  (new_filename, full_transcription, datetime.now().isoformat()))
         conn.commit()
-    
-    return {"filename": new_filename, "transcription": transcription}
+
+    return {"filename": new_filename, "transcription": full_transcription}
 
 # Retrieve All Transcriptions
 @app.get("/transcriptions")
